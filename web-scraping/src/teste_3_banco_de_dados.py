@@ -26,12 +26,52 @@ def setup_directories():
     if not os.path.exists(ACCOUNTING_DIR):
         os.makedirs(ACCOUNTING_DIR)
 
+def sanitize_csv(filepath):
+    """
+    Lê o CSV baixado, troca vírgula por ponto nas colunas de valor
+    e salva novamente em UTF-8 para o Banco aceitar.
+    """
+    print(f"   🔧 Corrigindo vírgulas em: {os.path.basename(filepath)}...")
+    try:
+        # Lê como Latin1 (padrão da ANS)
+        with open(filepath, 'r', encoding='latin1') as f:
+            lines = f.readlines()
+        
+        if not lines: return
+
+        new_lines = []
+        # Mantém o cabeçalho
+        new_lines.append(lines[0].strip())
+        
+        # Processa linha a linha
+        for line in lines[1:]:
+            line = line.strip()
+            if not line: continue
+            
+            parts = line.split(';')
+            
+            # Se a linha tiver dados (geralmente 6 colunas)
+            # As colunas de valor são as duas últimas (Saldo Inicial e Final)
+            if len(parts) >= 3:
+                # Remove aspas e troca vírgula por ponto
+                parts[-1] = parts[-1].replace('"', '').replace(',', '.')
+                parts[-2] = parts[-2].replace('"', '').replace(',', '.')
+            
+            new_lines.append(';'.join(parts))
+            
+        # Salva de volta como UTF-8 (Padrão do Banco)
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(new_lines))
+            
+    except Exception as e:
+        print(f"   ❌ Erro ao corrigir arquivo: {e}")
+
 def get_file_links_recursive(url, filters, current_depth=0):
     """
     Busca recursiva: Se achar arquivo, guarda. Se achar pasta do ano, entra nela.
     """
     if current_depth > 1: # Evita loop infinito
-        return []
+        return [] 
 
     print(f"🔎 Vasculhando: {url}")
     found_links = []
@@ -45,10 +85,10 @@ def get_file_links_recursive(url, filters, current_depth=0):
             href = a['href']
             text = a.get_text()
             
-            # Ignora link de "voltar" 
-            if "Parent Directory" in text:
+             # Ignora link de "voltar" 
+            if "Parent Directory" in text: 
                 continue
-
+            
             # Constrói URL completa se for relativa
             full_link = url + href if not href.startswith('http') else href
 
@@ -90,8 +130,15 @@ def download_and_extract(url, extract_to=None):
             print(f"📦 Extraindo {filename}...")
             with ZipFile(save_path, 'r') as zip_ref:
                 zip_ref.extractall(final_extract_path)
+                
+                # Limpa os CSVs extraídos imediatamente
+                for extracted_file in zip_ref.namelist():
+                    if extracted_file.lower().endswith('.csv'):
+                        full_path = os.path.join(final_extract_path, extracted_file)
+                        sanitize_csv(full_path)
+
             os.remove(save_path)
-            print(f"✅ Extraído com sucesso.")
+            print(f"✅ Extraído e limpo.")
         else:
             print(f"✅ Salvo com sucesso.")
             
@@ -110,7 +157,6 @@ def run_preparation():
     else:
         print("⚠️  CSV de Operadoras não encontrado.")
 
-    # Dados Contábeis
     print("\n DADOS CONTÁBEIS (2023-2024)")
     acc_links = get_file_links_recursive(URL_CONTABIL, TARGET_YEARS)
     

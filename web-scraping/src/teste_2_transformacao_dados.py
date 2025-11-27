@@ -4,8 +4,8 @@ import os
 from zipfile import ZipFile, ZIP_DEFLATED
 
 # CONFIGURAÇÕES
-INPUT_FILE = os.path.join("inputs", "Anexo_I.pdf")
-OUTPUT_DIR = "outputs"
+INPUT_FILE = os.path.join("inputs", "teste_1", "Anexo_I.pdf")
+OUTPUT_DIR = os.path.join("outputs", "teste_2")
 CSV_FILENAME = "Rol_Procedimentos.csv"
 ZIP_FILENAME = "Teste_Elder_Fausto.zip"
 

@@ -9,7 +9,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # CONFIGURAÇÕES
 TARGET_URL = "https://www.gov.br/ans/pt-br/acesso-a-informacao/participacao-da-sociedade/atualizacao-do-rol-de-procedimentos"
-INPUT_DIR = "inputs"
+INPUT_DIR = os.path.join("inputs", "teste_1")
 OUTPUT_DIR = "outputs"
 ZIP_FILE = os.path.join(OUTPUT_DIR, "Anexos_Baixados.zip")
 
@@ -21,7 +21,7 @@ HEADERS = {
 def setup_directories():
     """Cria as pastas de input e output se não existirem."""
     if not os.path.exists(INPUT_DIR):
-        os.makedirs(INPUT_DIR)
+        os.makedirs(INPUT_DIR) # Isso cria inputs/teste_1
     if not os.path.exists(OUTPUT_DIR):
         os.makedirs(OUTPUT_DIR)
 
@@ -42,9 +42,9 @@ def get_download_links():
             text = link.get_text().strip()
             href = link['href']
             
-            # LOG DE LINKS VISTOS
+            # LOG DE LINKS VISTOS 
             if "Anexo" in text:
-                print(f"Visto: '{text}' -> {href}")
+                print(f"   👀 Visto: '{text}' -> {href}")
 
             # LÓGICA DE PARSEAMENTO DOS ANEXOS
             # .lower() para transformar tudo em minúsculo e facilitar a comparação
@@ -66,6 +66,7 @@ def get_download_links():
 
 def download_file(url, filename):
     """Baixa o arquivo e salva no diretório de input."""
+    # O caminho completo agora inclui a pasta teste_1
     full_path = os.path.join(INPUT_DIR, filename)
     print(f"⬇️  Baixando: {filename}...")
     

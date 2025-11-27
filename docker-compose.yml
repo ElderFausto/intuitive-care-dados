@@ -1,0 +1,28 @@
+services:
+  # Serviço Python para rodar os scripts (ETL)
+  app:
+    build: .
+    container_name: intuitive-etl
+    volumes:
+      # Mapeia as pastas locais para dentro do container
+      - ./inputs:/app/inputs
+      - ./outputs:/app/outputs
+      - ./src:/app/src
+    depends_on:
+      - db
+
+  # Banco de Dados PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: intuitive-postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: intuitive_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

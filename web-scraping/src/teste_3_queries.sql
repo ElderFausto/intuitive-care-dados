@@ -2,7 +2,6 @@
 -- 1. CRIAÇÃO DAS TABELAS
 -- ============================================================================
 
--- Tabela de Operadoras (Dados Cadastrais)
 DROP TABLE IF EXISTS operadoras;
 CREATE TABLE operadoras (
     registro_ans INT PRIMARY KEY,
@@ -24,10 +23,9 @@ CREATE TABLE operadoras (
     representante VARCHAR(255),
     cargo_representante VARCHAR(100),
     regiao_comercializacao VARCHAR(50),
-    data_registro_ans DATE -- Importante formatar a data corretamente na importação
+    data_registro_ans DATE
 );
 
--- Tabela de Demonstrações Contábeis (Dados Financeiros)
 DROP TABLE IF EXISTS demonstracoes_contabeis;
 CREATE TABLE demonstracoes_contabeis (
     data_referencia DATE,
@@ -38,40 +36,32 @@ CREATE TABLE demonstracoes_contabeis (
     saldo_final NUMERIC(18, 2)
 );
 
--- Índices para otimizar as queries analíticas
 CREATE INDEX idx_contabil_data ON demonstracoes_contabeis(data_referencia);
 CREATE INDEX idx_contabil_reg ON demonstracoes_contabeis(registro_ans);
 CREATE INDEX idx_contabil_desc ON demonstracoes_contabeis(descricao);
 
 -- ============================================================================
--- 2. IMPORTAÇÃO DOS DADOS (Exemplos de COPY)
--- Ajustar os caminhos '/caminho/para/arquivo.csv' conforme o ambiente.
--- O Encoding 'LATIN1' é padrão da ANS. O delimitador costuma ser ';'.
+-- 2. IMPORTAÇÃO DOS DADOS
 -- ============================================================================
 
-/*
--- Exemplo para importar Operadoras:
-COPY operadoras 
-FROM '/app/inputs/teste_3/Relatorio_cadop.csv' 
-WITH (FORMAT CSV, HEADER, DELIMITER ';', ENCODING 'LATIN1');
+COPY operadoras FROM '/inputs/teste_3/Relatorio_cadop.csv' WITH (FORMAT CSV, HEADER, DELIMITER ';', ENCODING 'LATIN1');
 
--- Exemplo para importar Contábil (Repetir para cada arquivo trimestral):
-COPY demonstracoes_contabeis 
-FROM '/app/inputs/teste_3/demonstracoes_contabeis/1T2023.csv' 
-WITH (FORMAT CSV, HEADER, DELIMITER ';', ENCODING 'LATIN1');
-*/
+-- Importando todos os arquivos contábeis listados anteriormente
+COPY demonstracoes_contabeis FROM '/inputs/teste_3/demonstracoes_contabeis/1T2023.csv' WITH (FORMAT CSV, HEADER, DELIMITER ';', ENCODING 'UTF8');
+COPY demonstracoes_contabeis FROM '/inputs/teste_3/demonstracoes_contabeis/1T2024.csv' WITH (FORMAT CSV, HEADER, DELIMITER ';', ENCODING 'UTF8');
+COPY demonstracoes_contabeis FROM '/inputs/teste_3/demonstracoes_contabeis/2t2023.csv' WITH (FORMAT CSV, HEADER, DELIMITER ';', ENCODING 'UTF8');
+COPY demonstracoes_contabeis FROM '/inputs/teste_3/demonstracoes_contabeis/2T2024.csv' WITH (FORMAT CSV, HEADER, DELIMITER ';', ENCODING 'UTF8');
+COPY demonstracoes_contabeis FROM '/inputs/teste_3/demonstracoes_contabeis/3T2023.csv' WITH (FORMAT CSV, HEADER, DELIMITER ';', ENCODING 'UTF8');
+COPY demonstracoes_contabeis FROM '/inputs/teste_3/demonstracoes_contabeis/3T2024.csv' WITH (FORMAT CSV, HEADER, DELIMITER ';', ENCODING 'UTF8');
+COPY demonstracoes_contabeis FROM '/inputs/teste_3/demonstracoes_contabeis/4T2023.csv' WITH (FORMAT CSV, HEADER, DELIMITER ';', ENCODING 'UTF8');
+COPY demonstracoes_contabeis FROM '/inputs/teste_3/demonstracoes_contabeis/4T2024.csv' WITH (FORMAT CSV, HEADER, DELIMITER ';', ENCODING 'UTF8');
 
 -- ============================================================================
--- 3. QUERIES ANALÍTICAS
+-- 3. QUERIES ANALÍTICAS (FINAL)
 -- ============================================================================
 
-/* As 10 operadoras com maiores despesas em 
-   "EVENTOS/ SINISTROS CONHECIDOS OU AVISADOS DE ASSISTÊNCIA A SAÚDE MEDICO HOSPITALAR" 
-   no último trimestre?
-*/
-
+/* Top 10 operadoras com maiores despesas no último trimestre */
 WITH UltimoTrimestre AS (
-    -- Descobre qual é a data mais recente na base
     SELECT MAX(data_referencia) as data_max FROM demonstracoes_contabeis
 )
 SELECT 
@@ -81,17 +71,15 @@ SELECT
 FROM demonstracoes_contabeis dc
 JOIN operadoras o ON dc.registro_ans = o.registro_ans
 WHERE 
-    dc.descricao = 'EVENTOS/ SINISTROS CONHECIDOS OU AVISADOS DE ASSISTÊNCIA A SAÚDE MEDICO HOSPITALAR'
+    -- Ignora maiúsculas e % pula a parte do texto com erro de acento
+    dc.descricao ILIKE '%EVENTOS/ SINISTROS CONHECIDOS OU AVISADOS%MEDICO HOSPITALAR%'
     AND dc.data_referencia = (SELECT data_max FROM UltimoTrimestre)
 GROUP BY o.registro_ans, o.razao_social
 ORDER BY total_despesas DESC
 LIMIT 10;
 
-
-/* As 10 operadoras com maiores despesas nessa categoria no último ano? */
-
+/* Top 10 operadoras com maiores despesas no último ano */
 WITH UltimoAno AS (
-    -- Pega o ano da data mais recente
     SELECT EXTRACT(YEAR FROM MAX(data_referencia)) as ano_max FROM demonstracoes_contabeis
 )
 SELECT 
@@ -101,7 +89,7 @@ SELECT
 FROM demonstracoes_contabeis dc
 JOIN operadoras o ON dc.registro_ans = o.registro_ans
 WHERE 
-    dc.descricao = 'EVENTOS/ SINISTROS CONHECIDOS OU AVISADOS DE ASSISTÊNCIA A SAÚDE MEDICO HOSPITALAR'
+    dc.descricao ILIKE '%EVENTOS/ SINISTROS CONHECIDOS OU AVISADOS%MEDICO HOSPITALAR%'
     AND EXTRACT(YEAR FROM dc.data_referencia) = (SELECT ano_max FROM UltimoAno)
 GROUP BY o.registro_ans, o.razao_social
 ORDER BY total_despesas_ano DESC

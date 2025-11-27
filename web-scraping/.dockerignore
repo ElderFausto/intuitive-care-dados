@@ -1,0 +1,28 @@
+# Ignora o ambiente virtual local
+venv/
+.env
+
+# Ignora arquivos compilados do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignora arquivos do Git
+.git
+.gitignore
+
+# Ignora os dados locais (pois usamos volumes ou baixamos na hora)
+inputs/*
+outputs/*
+
+# Exceção: Mantém os arquivos .gitkeep se existirem (para manter a pasta)
+!inputs/.gitkeep
+!outputs/.gitkeep
+
+# Ignora os próprios arquivos de configuração do Docker
+Dockerfile
+docker-compose.yml
+
+# Ignora arquivos temporários do sistema
+.DS_Store

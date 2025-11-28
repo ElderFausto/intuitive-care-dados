@@ -1,4 +1,4 @@
-# 📊 Intuitive Care - Engenharia de Dados (ETL & SQL)
+# 📊 Intuitive Care - Teste de Dados
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791?style=for-the-badge&logo=postgresql)
@@ -102,6 +102,8 @@ Saída: Verifique a pasta outputs/teste_2 (CSV e ZIP).
 ▶️ Teste 3: Banco de Dados e Análise
 Etapa A: Baixar e Preparar Dados O script baixa os dados contábeis e de operadoras e corrige automaticamente a formatação (vírgula para ponto, encoding).
 ```bash
+docker compose exec app python3 src/teste_3_banco_de_dados.py
+
 cat src/teste_3_queries.sql | docker compose exec -T db psql -U user -d intuitive_db
 
 Saída: O terminal exibirá logs de criação de tabelas (CREATE TABLE), importação (COPY) e, ao final, duas tabelas com o ranking das operadoras.
